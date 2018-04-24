@@ -39,6 +39,12 @@ Promise.resolve()
     .then(docs=> Promise.all(docs.modules.map(insertDoc)))
     .then((results)=>{
         console.log(`inserted ${results.length} modules`)
+        const queue = { type:'queue', modules:results.map(doc=>doc._id)}
+        console.log("inserting the queue",queue)
+        return insertDoc(queue)
+    })
+    .then((queue)=>{
+        console.log("inserted the queue",queue)
     })
     .catch((e)=>{
         console.log("error ",e)
