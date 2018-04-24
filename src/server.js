@@ -36,6 +36,8 @@ function setupServer() {
     app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(doc => res.json(doc)))
     //list all modules, sorted by name, without the code
     app.get('/api/modules/', (req,res) => pFind({type:'module'},{name:1}).then(docs=>res.json(docs)))
+    //return the queue object which lists ids of
+    app.get('/api/queue/',(req,res) => pFind({type:'queue'}).then(doc=>res.json(doc)))
 
     app.listen(PORT, () => console.log(`
         modules server http://localhost:${PORT}/ 
