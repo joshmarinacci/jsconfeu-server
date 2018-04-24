@@ -11,6 +11,17 @@ const Datastore = require('nedb')
 const DB_FILE = path.join(process.cwd(),'modules.db')
 const DB = new Datastore({filename: DB_FILE, autoload:true})
 
+
+//call nedb.find as a promise
+function pFind(query,options) {
+    return new Promise((res,rej)=>{
+        DB.find(query,options,(err,docs)=>{
+            if(err) return rej(err)
+            return res(docs)
+        })
+    })
+}
+
 function setupServer() {
     //create the server
     const app = express()
@@ -22,9 +33,14 @@ function setupServer() {
     app.use(bodyParser.json())
 
     //get full info of a particular module
-    app.get('/api/modules/:id', (req,res) => pFind({_id:id})).then(doc => res.json(doc))
+    app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(doc => res.json(doc)))
     //list all modules, sorted by name, without the code
     app.get('/api/modules/', (req,res) => pFind({type:'module'},{name:1}).then(docs=>res.json(docs)))
 
+    app.listen(PORT, () => console.log(`
+        modules server http://localhost:${PORT}/ 
+        database  ${DB_FILE}`))
 }
+
+setupServer()
 
