@@ -1,0 +1,25 @@
+{
+    "modules": [
+        {
+            "type": "module",
+            "author":"bob@bob.com",
+            "title":"rad module 1",
+            "description":"does rad things",
+            "json": "some rad json"
+        },
+        {
+            "type":"module",
+            "author":"hank@hank.com",
+            "title":"rad module 2",
+            "description":"does rad things",
+            "json": "some rad json"
+        },
+        {
+            "type":"module",
+            "author":"steve@steve.com",
+            "title":"rad module 3",
+            "description":"does rad things",
+            "json": "some rad json"
+        }
+    ]
+}
