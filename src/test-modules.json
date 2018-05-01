@@ -2,24 +2,47 @@
     "modules": [
         {
             "type": "module",
+            "origin":"wasm",
             "author":"bob@bob.com",
             "title":"rad module 1",
+            "tags":["wasm", "rust"],
             "description":"does rad things",
-            "json": "some rad json"
+
+            "wasm":"",
+            "rust":"",
+            "json": {}
         },
         {
             "type":"module",
+            "origin":"ar",
             "author":"hank@hank.com",
-            "title":"rad module 2",
-            "description":"does rad things",
-            "json": "some rad json"
+            "title":"ar animation 1",
+            "tags":["ar","animation"],
+            "description":"does ar animation",
+
+            "json": {}
         },
         {
             "type":"module",
+            "origin":"upload-js",
             "author":"steve@steve.com",
-            "title":"rad module 3",
-            "description":"does rad things",
-            "json": "some rad json"
+            "title":"uploaded module",
+            "tags":["javascript"],
+            "description":"was created by uploading js files",
+
+            "javascript":"",
+            "json": {}
+        },
+        {
+            "type":"module",
+            "origin":"builtin",
+            "author":"steve@steve.com",
+            "title":"plain red",
+            "tags":["builtin","static","javascript"],
+            "description":"built in, pure red, one frame",
+
+            "javascript":"",
+            "json": {}
         }
     ]
 }
