@@ -7,10 +7,13 @@
             "title":"rad module 1",
             "tags":["wasm", "rust"],
             "description":"does rad things",
-
             "wasm":"",
             "rust":"",
-            "json": {}
+            "json": {
+                "width":0,
+                "height":0,
+                "frames":0
+            }
         },
         {
             "type":"module",
@@ -20,7 +23,11 @@
             "tags":["ar","animation"],
             "description":"does ar animation",
 
-            "json": {}
+            "json": {
+                "width":0,
+                "height":0,
+                "frames":0
+            }
         },
         {
             "type":"module",
@@ -31,18 +38,11 @@
             "description":"was created by uploading js files",
 
             "javascript":"",
-            "json": {}
-        },
-        {
-            "type":"module",
-            "origin":"builtin",
-            "author":"steve@steve.com",
-            "title":"plain red",
-            "tags":["builtin","static","javascript"],
-            "description":"built in, pure red, one frame",
-
-            "javascript":"",
-            "json": {}
+            "json": {
+                "width":0,
+                "height":0,
+                "frames":0
+            }
         }
     ]
 }
