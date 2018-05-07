@@ -13,7 +13,7 @@ const GithubStrategy = require('passport-github')
 const SECRETS = {
     GITHUB_CLIENT_ID:'f85c3170e290cad01938',
     GITHUB_CLIENT_SECRET:'b08c48e264f24ef13ce369936365b1829598390c',
-    GITHUB_CALLBACK_URL:'http://localhost:39176/auth/github/callback'
+    GITHUB_CALLBACK_URL:'http://vr.josh.earth/jsconfeu-builder/auth/github/callback'
 }
 
 
@@ -69,6 +69,8 @@ function setupServer() {
                 return docs.map(doc=>doc[0])
             })
         .then(doc=>res.json(doc)))
+
+    // api.post('/api/publish/')
 
     app.get('/api/github/login', (req,res)=>{
         const url = `https://github.com/login/oauth/authorize?client_id=${SECRETS.GITHUB_CLIENT_ID}&redirect_uri=${SECRETS.GITHUB_CALLBACK_URL}`
