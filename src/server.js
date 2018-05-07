@@ -32,6 +32,36 @@ function pFind(query,options) {
     })
 }
 
+function pInsert(doc) {
+    return new Promise((res,rej)=>{
+        DB.insert(doc,(err,newDoc)=>{
+            if(err) return rej(err)
+            return res(newDoc)
+        })
+    })
+}
+
+function pUpdate(query,doc) {
+    return new Promise((res,rej)=>{
+        console.log("updating with the queruy",query)
+        DB.update(query,doc,{returnUpdatedDocs:true},(err,num,newDoc)=>{
+            console.log("update did",err,num,newDoc, newDoc.modules.length)
+            if(err) return rej(err)
+            return res(newDoc)
+        })
+    })
+}
+
+function appendQueue(mod) {
+    return pFind({type:'queue'}).then((docs)=>{
+        console.log("got the queue",docs)
+        const queue = docs[0]
+        queue.modules.push(mod._id)
+        console.log('count',queue.modules.length)
+        return pUpdate({type:'queue'},queue)
+    })
+}
+
 function setupServer() {
     //create the server
     const app = express()
@@ -70,7 +100,21 @@ function setupServer() {
             })
         .then(doc=>res.json(doc)))
 
-    // api.post('/api/publish/')
+    app.post('/api/publish/', (req,res)=>{
+        const module = req.body
+        console.log("publishing the module",module)
+        pInsert(module).then((doc)=>{
+            console.log("inserted", doc)
+            return doc
+        }).then((doc)=>{
+            return appendQueue(doc)
+        }).then((queue)=>{
+            console.log("the endingt queue is",queue, queue.modules.length)
+            return res.json({success:true})
+        }).catch((e)=>{
+            return res.json({success:false, error:e})
+        })
+    })
 
     app.get('/api/github/login', (req,res)=>{
         const url = `https://github.com/login/oauth/authorize?client_id=${SECRETS.GITHUB_CLIENT_ID}&redirect_uri=${SECRETS.GITHUB_CALLBACK_URL}`
@@ -99,6 +143,7 @@ function setupServer() {
 </body>
 </html>`)
     })
+
 
     app.get('/api/userinfo', (req,res) => {
         console.log("user info request", req.query)
