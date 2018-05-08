@@ -16,6 +16,8 @@ const SECRETS = {
     GITHUB_CALLBACK_URL:'https://vr.josh.earth/jsconfeu-builder/api/github/callback'
 }
 
+const ADMIN_USERS = ['joshmarinacci']
+
 
 const DB_FILE = path.join(process.cwd(),'modules.db')
 const DB = new Datastore({filename: DB_FILE, autoload:true})
@@ -159,6 +161,15 @@ function setupServer() {
     })
 
     app.post('/api/updatequeue',(req,res) => {
+        console.log("headers",req.headers)
+        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
+        const token = req.headers['access-key']
+        const user = USERS[token]
+        console.log(token,user)
+        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
+        if(ADMIN_USERS.indexOf(user.username) < 0) {
+            return res.json({success:false,message:'this user is not allowed to update the queue'})
+        }
         pFind({type:'queue'})
             .then((queues)=> {
                 const queue = queues[0]
