@@ -43,9 +43,7 @@ function pInsert(doc) {
 
 function pUpdate(query,doc) {
     return new Promise((res,rej)=>{
-        console.log("updating with the queruy",query)
         DB.update(query,doc,{returnUpdatedDocs:true},(err,num,newDoc)=>{
-            console.log("update did",err,num,newDoc, newDoc.modules.length)
             if(err) return rej(err)
             return res(newDoc)
         })
@@ -59,6 +57,18 @@ function appendQueue(mod) {
         queue.modules.push(mod._id)
         console.log('count',queue.modules.length)
         return pUpdate({type:'queue'},queue)
+    })
+}
+
+function findAllModules() {
+    return new Promise((res,rej)=>{
+        DB.find({type:'module'})
+            .sort({name:1})
+            .projection({javascript:0, json:0})
+            .exec((err,docs)=>{
+            if(err) return rej(err)
+            return res(docs)
+        })
     })
 }
 
@@ -88,29 +98,25 @@ function setupServer() {
     //get full info of a particular module
     app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(doc => res.json(doc)))
     //list all modules, sorted by name, without the code
-    app.get('/api/modules/', (req,res) => pFind({type:'module'},{name:1}).then(docs=>res.json(docs)))
+    app.get('/api/modules/', (req,res) => findAllModules().then(docs=>res.json(docs)))
     //return the queue object which lists ids of
     app.get('/api/queue/',(req,res) =>
         pFind({type:'queue'})
-            .then((queue)=>{
-                return Promise.all(queue[0].modules.map(id=>pFind({_id:id})))
-            })
-            .then((docs)=>{
-                return docs.map(doc=>doc[0])
-            })
-        .then(doc=>res.json(doc)))
+            .then((queues)=>{
+                const queue = queues[0]
+                return Promise.all(queue.modules.map(id=>pFind({_id:id})))
+                .then((docs)=>docs.map(doc=>doc[0]))
+                .then(modules=>{
+                    queue.expanded = modules
+                    res.json(queue)
+                })
+            }))
 
     app.post('/api/publish/', (req,res)=>{
         const module = req.body
         console.log("publishing the module",module)
         pInsert(module).then((doc)=>{
-            console.log("inserted", doc)
-            return doc
-        }).then((doc)=>{
-            return appendQueue(doc)
-        }).then((queue)=>{
-            console.log("the endingt queue is",queue, queue.modules.length)
-            return res.json({success:true})
+            return res.json({success:true, doc:doc})
         }).catch((e)=>{
             return res.json({success:false, error:e})
         })
@@ -150,6 +156,18 @@ function setupServer() {
         const user = USERS[req.query.accesstoken]
         if(user) return res.json({success:true,user:user})
         res.json({success:false,message:"no user found with access token"+req.query.accesstoken})
+    })
+
+    app.post('/api/updatequeue',(req,res) => {
+        pFind({type:'queue'})
+            .then((queues)=> {
+                const queue = queues[0]
+                queue.modules = req.body
+                pUpdate({type:'queue'},queue).then((queue)=>{
+                    console.log("queue is updated",queue.modules.length)
+                    return res.json({success:true, queue:queue})
+                })
+            })
     })
 
     app.listen(PORT, () => console.log(`
