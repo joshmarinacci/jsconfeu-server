@@ -82,7 +82,7 @@ function setupServer() {
     //turn on CORS, Cross Origin Resource Sharing. allow all origins
     app.use(cors({origin:"*"}))
     //assume all bodies will be JSON and parse them automatically
-    app.use(bodyParser.json())
+    app.use(bodyParser.json({limit:'1MB'}))
 
     passport.use(new GithubStrategy({
         clientID: SECRETS.GITHUB_CLIENT_ID,
@@ -114,9 +114,28 @@ function setupServer() {
                 })
             }))
 
-    app.post('/api/publish/', (req,res)=>{
+    function checkAuth(req,res,next) {
+        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
+        const token = req.headers['access-key']
+        const user = USERS[token]
+        console.log(token,user)
+        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
+        next()
+    }
+    function checkAdminAuth(req,res,next) {
+        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
+        const token = req.headers['access-key']
+        const user = USERS[token]
+        console.log(token,user)
+        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
+        if(ADMIN_USERS.indexOf(user.username) < 0) {
+            return res.json({success:false,message:'this user is not allowed to update the queue'})
+        }
+        next()
+    }
+    app.post('/api/publish/', checkAuth, (req,res)=>{
         const module = req.body
-        console.log("publishing the module",module)
+        module.type = 'module'
         pInsert(module).then((doc)=>{
             return res.json({success:true, doc:doc})
         }).catch((e)=>{
@@ -160,16 +179,8 @@ function setupServer() {
         res.json({success:false,message:"no user found with access token"+req.query.accesstoken})
     })
 
-    app.post('/api/updatequeue',(req,res) => {
+    app.post('/api/updatequeue', checkAdminAuth, (req,res) => {
         console.log("headers",req.headers)
-        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
-        const token = req.headers['access-key']
-        const user = USERS[token]
-        console.log(token,user)
-        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
-        if(ADMIN_USERS.indexOf(user.username) < 0) {
-            return res.json({success:false,message:'this user is not allowed to update the queue'})
-        }
         pFind({type:'queue'})
             .then((queues)=> {
                 const queue = queues[0]
