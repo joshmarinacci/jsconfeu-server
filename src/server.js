@@ -136,9 +136,11 @@ function setupServer() {
     app.post('/api/publish/', checkAuth, (req,res)=>{
         const module = req.body
         module.type = 'module'
+        console.log("publishing the module",module)
         pInsert(module).then((doc)=>{
             return res.json({success:true, doc:doc})
         }).catch((e)=>{
+            console.log("publshing failed",e)
             return res.json({success:false, error:e})
         })
     })
