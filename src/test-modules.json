@@ -4,44 +4,48 @@
             "type": "module",
             "origin":"wasm",
             "author":"bob@bob.com",
-            "title":"rad module 1",
+            "title":"empty 1",
             "tags":["wasm", "rust"],
             "description":"does rad things",
             "wasm":"",
             "rust":"",
-            "json": {
-                "width":0,
-                "height":0,
-                "frames":0
+            "manifest": {
+                "animation": {
+                    "width": 0,
+                    "height": 0,
+                    "frames": 0
+                }
             }
         },
         {
             "type":"module",
             "origin":"ar",
             "author":"hank@hank.com",
-            "title":"ar animation 1",
+            "title":"empty ar 1",
             "tags":["ar","animation"],
             "description":"does ar animation",
-
-            "json": {
-                "width":0,
-                "height":0,
-                "frames":0
+            "manifest": {
+                "animation": {
+                    "width": 0,
+                    "height": 0,
+                    "frames": 0
+                }
             }
         },
         {
             "type":"module",
             "origin":"upload-js",
             "author":"steve@steve.com",
-            "title":"uploaded module",
+            "title":"empty uploaded module",
             "tags":["javascript"],
             "description":"was created by uploading js files",
-
             "javascript":"",
-            "json": {
-                "width":0,
-                "height":0,
-                "frames":0
+            "manifest": {
+                "animation": {
+                    "width": 0,
+                    "height": 0,
+                    "frames": 0
+                }
             }
         }
     ]

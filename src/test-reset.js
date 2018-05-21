@@ -34,27 +34,12 @@ function loadTestDocs() {
 }
 
 
-const WHITE = 0xFFFFFFFF;
-const BLACK = 0x000000FF;
-const RED   = 0xFF0000FF;
-const GREEN   = 0x00FF00FF;
-
-
-function performDiagonalLines(old,ctx) {
-    for(let f=0; f<ctx.getFrameCount(); f++) {
-        for (let y = 0; y < ctx.getHeight(); y++) {
-            for (let x = 0; x < ctx.getWidth(); x++) {
-                ctx.setPixelRGBA(x, y, f, Math.floor((x + y) / 2) % 2 === 0 ? WHITE : BLACK)
-            }
-        }
-    }
-}
 
 function makeStaticRed(ctx) {
     for(let f=0; f<ctx.getFrameCount(); f++) {
         for (let y = 0; y < ctx.getHeight(); y++) {
             for (let x = 0; x < ctx.getWidth(); x++) {
-                ctx.setPixelRGBA(x, y, f, RED)
+                ctx.setPixelRGBA(x, y, f, [255,0,0])
             }
         }
     }
@@ -64,54 +49,39 @@ function makeStaticDiagonals(ctx) {
     for(let f=0; f<ctx.getFrameCount(); f++) {
         for (let y = 0; y < ctx.getHeight(); y++) {
             for (let x = 0; x < ctx.getWidth(); x++) {
-                ctx.setPixelRGBA(x, y, f, Math.floor((x + y) / 2) % 2 === 0 ? WHITE : BLACK)
+                ctx.setPixelRGBA(x, y, f, Math.floor((x + y) / 2) % 2 === 0 ? [255,255,255] : [0,0,0])
             }
         }
     }
 }
 
-function performVerticalLines(old,ctx) {
-    const w = ctx.getWidth()
-    for(let f=0; f<ctx.getFrameCount(); f++) {
-        for (let y = 0; y < ctx.getHeight(); y++) {
-            for (let x = 0; x < ctx.getWidth(); x++) {
-                if (x % 5 === 0) {
-                    ctx.setPixelRGBA((x + f)%w, y, f, RED)
-                } else {
-                    ctx.setPixelRGBA((x + f)%w, y, f, old.getPixelRGBA((x+f)%w, y, f))
-                }
-            }
-        }
-    }
-}
 
 function makeMovingHorizLines(ctx) {
     for(let f=0; f<ctx.getFrameCount(); f++) {
         for (let y = 0; y < ctx.getHeight(); y++) {
             for (let x = 0; x < ctx.getWidth(); x++) {
-                const col = (y+f)%5===0?GREEN:WHITE //make every 5th line be GREEN instead of WHITE
+                const col = (y+f)%5===0?[0,255,0]:[255,255,255] //make every 5th line be GREEN instead of WHITE
                 ctx.setPixelRGBA(x, y, f, col)
             }
         }
     }
 }
 
-function performHorizontalLines(old_ctx,new_ctx) {
-    for(let f=0; f<new_ctx.getFrameCount(); f++) {
-        for (let y = 0; y < new_ctx.getHeight(); y++) {
-            for (let x = 0; x < new_ctx.getWidth(); x++) {
-                const old_color = old_ctx.getPixelRGBA(x,y,f)
-                const col = y%5===0?RED:old_color //make every 5th line be red
-                new_ctx.setPixelRGBA(x, y, f, col)
-            }
-        }
-    }
-}
 
+function toJSON(frameset) {
+    return {
+        cols:frameset.width,
+        rows:frameset.height,
+        frameCount:frameset.frames.length,
+        fps:10,
+        data:frameset.frames,
+    }
+
+}
 
 function makeStaticRedDoc() {
     //insert red doc
-    const frameset = RenderUtils.makeFrameset(2,2,1)
+    const frameset = RenderUtils.makeFrameset(36,44,1)
     const ctx = RenderUtils.makeContext(frameset)
     makeStaticRed(ctx)
     // console.log('made static red')
@@ -124,13 +94,15 @@ function makeStaticRedDoc() {
         "title": "plain red",
         "tags": ["builtin", "static", "javascript"],
         "description": "1 second frame of pure red",
+        "manifest": {
+            "animation": toJSON(frameset)
+        },
         "javascript": makeStaticRed.toString(),
-        "json": frameset
     }
 }
 
 function makeStaticDiagonalsDoc() {
-    const frameset = RenderUtils.makeFrameset(4,4,20)
+    const frameset = RenderUtils.makeFrameset(36,44,20)
     const ctx = RenderUtils.makeContext(frameset)
     makeStaticDiagonals(ctx)
     const json = JSON.stringify(frameset)
@@ -138,16 +110,19 @@ function makeStaticDiagonalsDoc() {
         "type": "module",
         "origin": "builtin",
         "author": "jmarinacci@mozilla.com",
-        "title": "plain red",
+        "title": "diagonals",
         "tags": ["builtin", "static", "javascript"],
         "description": "20 frames of 4x4 checkerboard",
+        "manifest": {
+            "animation": toJSON(frameset)
+        },
         "javascript": makeStaticDiagonals.toString(),
-        "json": frameset
     }
 }
 
 function makeHorizDoc() {
-    const frameset = RenderUtils.makeFrameset(20,20,20)
+    // const frameset = RenderUtils.makeFrameset(20,20,20)
+    const frameset = RenderUtils.makeFrameset(36,44,20)
     const ctx = RenderUtils.makeContext(frameset)
     makeMovingHorizLines(ctx)
     const json = JSON.stringify(frameset)
@@ -158,15 +133,18 @@ function makeHorizDoc() {
         "title": "plain red",
         "tags": ["builtin", "static", "javascript"],
         "description": "20 frames of 4x4 checkerboard",
+        "manifest": {
+            "animation": toJSON(frameset)
+        },
         "javascript": makeMovingHorizLines.toString(),
-        "json": frameset
     }
 }
 Promise.resolve()
     .then(deleteAllDocs)
-    .then(loadTestDocs)
-    .then(docs=> Promise.all(docs.modules.map(insertDoc)))
+    // .then(loadTestDocs)
+    // .then(docs=> Promise.all(docs.modules.map(insertDoc)))
     .then((results)=> {
+        results = []
         console.log(`inserted ${results.length} modules`)
         return Promise.resolve(results)
             .then((results)=>{

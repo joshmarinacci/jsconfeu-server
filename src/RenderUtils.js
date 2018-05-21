@@ -2,18 +2,12 @@ const BLACK = 0x000000FF;
 
 function getWidth(fs) { return fs.width }
 function getHeight(fs) { return fs.height }
-function getColorAt(fs, x,y, t) {
-    const n = y * getWidth(fs) + x
-    return fs.frames[t][n]
-}
 
 function getPixelRGBA(fs, x,y, f) {
-    const n = y * getWidth(fs) + x
-    return fs.frames[f][n]
+    return fs.frames[f][y][x]
 }
 function setPixelRGBA(fs, x,y, f, c) {
-    const n = y * getWidth(fs) + x
-    fs.frames[f][n] = c
+    fs.frames[f][y][x] = c
     return c
 }
 function getFrameCount(fs) { return fs.frames.length }
@@ -33,11 +27,15 @@ module.exports.makeFrameset = function (w,h,frameCount) {
     // const h = 36
     // const frameCount = 10;
     for(let i=0; i<frameCount; i++) {
-        const f1 = []
-        for(let x = 0; x<w*h; x++) {
-            f1[x] = BLACK
+        const frame = []
+        for(let j = 0; j < h; j++) {
+            let row = []
+            for(let i = 0; i < w; i++) {
+                row[i] = [BLACK,BLACK,BLACK]
+            }
+            frame.push(row)
         }
-        frames.push(f1)
+        frames.push(frame)
     }
     return {
         width:w,
