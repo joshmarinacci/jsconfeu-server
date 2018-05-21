@@ -66,7 +66,7 @@ function findAllModules() {
     return new Promise((res,rej)=>{
         DB.find({type:'module'})
             .sort({name:1})
-            .projection({javascript:0, json:0})
+            .projection({javascript:0, json:0, manifest:0})
             .exec((err,docs)=>{
             if(err) return rej(err)
             return res(docs)
