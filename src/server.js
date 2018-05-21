@@ -16,7 +16,7 @@ const SECRETS = {
     GITHUB_CALLBACK_URL:'https://vr.josh.earth/jsconfeu-builder/api/github/callback'
 }
 
-const ADMIN_USERS = ['joshmarinacci']
+const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat']
 
 
 const DB_FILE = path.join(process.cwd(),'modules.db')
