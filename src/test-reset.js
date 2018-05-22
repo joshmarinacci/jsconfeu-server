@@ -147,6 +147,7 @@ Promise.resolve()
         results = []
         console.log(`inserted ${results.length} modules`)
         return Promise.resolve(results)
+            /*
             .then((results)=>{
                 return insertDoc(makeStaticRedDoc()).then((res)=>{
                     results.push(res);
@@ -165,6 +166,7 @@ Promise.resolve()
                     return results
                 })
             })
+            */
     })
     .then((results)=> {
         const queue = { type:'queue', modules:results.map(doc=>doc._id)}

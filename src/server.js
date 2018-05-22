@@ -74,6 +74,17 @@ function findAllModules() {
     })
 }
 
+function findModuleByIdCompact(id) {
+    return new Promise((res,rej)=>{
+        DB.find({_id:id})
+            .projection({javascript:0, json:0, manifest:0})
+            .exec((err,docs)=>{
+                if(err) return rej(err)
+                return res(docs[0])
+            })
+    })
+}
+
 function setupServer() {
     //create the server
     const app = express()
@@ -82,7 +93,7 @@ function setupServer() {
     //turn on CORS, Cross Origin Resource Sharing. allow all origins
     app.use(cors({origin:"*"}))
     //assume all bodies will be JSON and parse them automatically
-    app.use(bodyParser.json({limit:'1MB'}))
+    app.use(bodyParser.json({limit:'20MB'}))
 
     passport.use(new GithubStrategy({
         clientID: SECRETS.GITHUB_CLIENT_ID,
@@ -98,7 +109,7 @@ function setupServer() {
 
 
     //get full info of a particular module
-    app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(doc => res.json(doc)))
+    app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(docs => res.json(docs[0])))
     //list all modules, sorted by name, without the code
     app.get('/api/modules/', (req,res) => findAllModules().then(docs=>res.json(docs)))
     //return the queue object which lists ids of
@@ -106,8 +117,7 @@ function setupServer() {
         pFind({type:'queue'})
             .then((queues)=>{
                 const queue = queues[0]
-                return Promise.all(queue.modules.map(id=>pFind({_id:id})))
-                .then((docs)=>docs.map(doc=>doc[0]))
+                return Promise.all(queue.modules.map(id=>findModuleByIdCompact(id)))
                 .then(modules=>{
                     queue.expanded = modules
                     res.json(queue)
