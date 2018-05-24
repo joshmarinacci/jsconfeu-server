@@ -22,6 +22,10 @@ const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat']
 const DB_FILE = path.join(process.cwd(),'modules.db')
 const DB = new Datastore({filename: DB_FILE, autoload:true})
 
+const ANIM_DIR = path.join(process.cwd(),'anims')
+console.log(fs.existsSync(ANIM_DIR))
+if(!fs.existsSync(ANIM_DIR)) fs.mkdirSync(ANIM_DIR)
+
 const USERS = {}
 
 //call nedb.find as a promise
@@ -43,22 +47,28 @@ function pInsert(doc) {
     })
 }
 
+function saveModule(module) {
+    console.log('inside save module',module)
+    return Promise.resolve(null).then(() => {
+        module.type = 'module'
+        // console.log("publishing the module",module)
+        const manifest = module.manifest
+        delete module.manifest
+        module.animpath = `anim_${Math.random()}_.json`
+        const apath = path.join(ANIM_DIR,module.animpath)
+        fs.writeFileSync(apath,JSON.stringify(manifest))
+        // console.log("wrote the manifest to the file",apath)
+        // console.log("the final module is", module)
+        return pInsert(module)
+    })
+}
+
 function pUpdate(query,doc) {
     return new Promise((res,rej)=>{
         DB.update(query,doc,{returnUpdatedDocs:true},(err,num,newDoc)=>{
             if(err) return rej(err)
             return res(newDoc)
         })
-    })
-}
-
-function appendQueue(mod) {
-    return pFind({type:'queue'}).then((docs)=>{
-        console.log("got the queue",docs)
-        const queue = docs[0]
-        queue.modules.push(mod._id)
-        console.log('count',queue.modules.length)
-        return pUpdate({type:'queue'},queue)
     })
 }
 
@@ -85,6 +95,39 @@ function findModuleByIdCompact(id) {
     })
 }
 
+function getFullModuleById(id) {
+    return new Promise((res,rej)=>{
+        DB.find({_id:id})
+            .exec((err,docs)=>{
+                if(err) return rej(err)
+                const mod = docs[0]
+                mod.manifest = JSON.parse(fs.readFileSync(path.join(ANIM_DIR,mod.animpath)).toString())
+                return res(mod)
+            })
+    })
+}
+
+function checkAuth(req,res,next) {
+    if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
+    const token = req.headers['access-key']
+    const user = USERS[token]
+    console.log(token,user)
+    if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
+    next()
+}
+
+function checkAdminAuth(req,res,next) {
+    if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
+    const token = req.headers['access-key']
+    const user = USERS[token]
+    console.log(token,user)
+    if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
+    if(ADMIN_USERS.indexOf(user.username) < 0) {
+        return res.json({success:false,message:'this user is not allowed to update the queue'})
+    }
+    next()
+}
+
 function setupServer() {
     //create the server
     const app = express()
@@ -109,9 +152,23 @@ function setupServer() {
 
 
     //get full info of a particular module
-    app.get('/api/modules/:id', (req,res) => pFind({_id:req.params.id}).then(docs => res.json(docs[0])))
+    app.get('/api/modules/:id', (req,res) =>
+        getFullModuleById(req.params.id)
+            .then(mod => res.json({success:true, doc:mod}))
+            .catch(e => {
+                console.log("error getting full module by id",e)
+                res.json({success:false, error:e})
+            })
+    )
     //list all modules, sorted by name, without the code
-    app.get('/api/modules/', (req,res) => findAllModules().then(docs=>res.json(docs)))
+    app.get('/api/modules/', (req,res) =>
+        findAllModules()
+            .then(docs=>res.json(docs))
+            .catch(e => {
+                console.log("/api/modules error",e)
+                res.json({success:false, error:e})
+            })
+        )
     //return the queue object which lists ids of
     app.get('/api/queue/',(req,res) =>
         pFind({type:'queue'})
@@ -120,39 +177,26 @@ function setupServer() {
                 return Promise.all(queue.modules.map(id=>findModuleByIdCompact(id)))
                 .then(modules=>{
                     queue.expanded = modules
-                    res.json(queue)
+                    res.json({success:true, queue:queue})
                 })
-            }))
+            }).catch((e)=>{
+                console.log("/api/queue error",e)
+                res.json({success:false, error:e})
+            })
+    )
 
-    function checkAuth(req,res,next) {
-        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
-        const token = req.headers['access-key']
-        const user = USERS[token]
-        console.log(token,user)
-        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
-        next()
-    }
-    function checkAdminAuth(req,res,next) {
-        if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
-        const token = req.headers['access-key']
-        const user = USERS[token]
-        console.log(token,user)
-        if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
-        if(ADMIN_USERS.indexOf(user.username) < 0) {
-            return res.json({success:false,message:'this user is not allowed to update the queue'})
-        }
-        next()
-    }
     app.post('/api/publish/', checkAuth, (req,res)=>{
-        const module = req.body
-        module.type = 'module'
-        console.log("publishing the module",module)
-        pInsert(module).then((doc)=>{
-            return res.json({success:true, doc:doc})
-        }).catch((e)=>{
-            console.log("publshing failed",e)
-            return res.json({success:false, error:e})
-        })
+        console.log("pubilshign");
+        saveModule(req.body)
+            .then(doc=> {
+                console.log("done saving. sending response")
+                console.log("final doc is",doc)
+                res.json({success:true, doc:doc})
+            })
+            .catch(e => {
+                console.log("error inside save module",e)
+                res.json({success:false, error:e})
+            })
     })
 
     app.get('/api/github/login', (req,res)=>{
