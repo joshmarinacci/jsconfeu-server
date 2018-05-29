@@ -232,7 +232,7 @@ function setupServer() {
         console.log("user info request", req.query)
         const user = USERS[req.query.accesstoken]
         if(user) {
-            user.admin = (ADMIN_USERS.indexOf(user.username) < 0)
+            user.admin = (ADMIN_USERS.indexOf(user.username) >= 0)
             return res.json({success:true,user:user})
         }
         res.json({success:false,message:"no user found with access token"+req.query.accesstoken})
