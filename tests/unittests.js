@@ -1,5 +1,5 @@
 const test = require('tape')
-const server = require('./server')
+const server = require('../src/server')
 const fetch = require('node-fetch')
 console.log("the server should be started now");
 server.SKIP_AUTH = true
@@ -24,7 +24,7 @@ function POST(url,body) {
         .then(res=>res.json())
 }
 
-test('run tests',t => {
+test('run queue',t => {
     let doc = null
     GET(`${BASE}/modules`)
         .then(mods=> {
@@ -73,4 +73,5 @@ test('run tests',t => {
             process.exit(-1)
         })
 })
+
 

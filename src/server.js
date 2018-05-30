@@ -74,7 +74,7 @@ function pUpdate(query,doc) {
 
 function findAllModules() {
     return new Promise((res,rej)=>{
-        DB.find({type:'module'})
+        DB.find({type:'module', $not:{archived:true}})
             .sort({timestamp:-1})
             .projection({javascript:0, json:0, manifest:0})
             .exec((err,docs)=>{
@@ -103,6 +103,19 @@ function getFullModuleById(id) {
                 const mod = docs[0]
                 mod.manifest = JSON.parse(fs.readFileSync(path.join(ANIM_DIR,mod.animpath)).toString())
                 return res(mod)
+            })
+    })
+}
+
+function pUpdateFields(query, fields) {
+    return new Promise((res,rej)=>{
+        DB.update(query,
+            {$set:fields},
+            {returnUpdatedDocs:true},
+            (err,num,docs)=>{
+                if(err) return rej(err)
+                console.log("num updated",num)
+                return res(docs)
             })
     })
 }
@@ -152,6 +165,12 @@ function setupServer() {
 
 
     //get full info of a particular module
+    app.post('/api/modules/archive/:id', (req,res)=>{
+        pUpdateFields({_id:req.params.id},{archived:true}).then((doc)=>{
+            console.log("successfully archived it",doc)
+            res.json({success:true, doc:doc})
+        })
+    })
     app.get('/api/modules/:id', (req,res) =>
         getFullModuleById(req.params.id)
             .then(mod => res.json({success:true, doc:mod}))
@@ -169,6 +188,22 @@ function setupServer() {
                 res.json({success:false, error:e})
             })
         )
+    //mark a particular item in the queue as completed
+    app.post('/api/queue/complete/:id', (req,res)=>{
+        console.log("trying to complete", req.params.id)
+        pUpdateFields({_id:req.params.id},{completed:true}).then((doc)=> {
+            console.log("successfully completed it", doc)
+            return pFind({type: 'queue'})
+        })
+        .then((queues)=> {
+            const queue = queues[0]
+            console.log("old queue count",queue.modules)
+            queue.modules = queue.modules.filter(mod=>mod !== req.params.id)
+            console.log("new queue count", queue.modules)
+            pUpdate({type:'queue'},queue)
+                        .then(queue => res.json({success:true, queue:queue}))
+        })
+    })
     //return the queue object which lists ids of
     app.get('/api/queue/',(req,res) =>
         pFind({type:'queue'})
@@ -177,6 +212,7 @@ function setupServer() {
                 return Promise.all(queue.modules.map(id=>findModuleByIdCompact(id)))
                 .then(modules=>{
                     queue.expanded = modules
+                    queue.expanded = queue.expanded.filter(mod => !mod.completed)
                     res.json({success:true, queue:queue})
                 })
             }).catch((e)=>{
