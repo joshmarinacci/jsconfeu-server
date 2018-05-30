@@ -27,6 +27,9 @@ console.log(fs.existsSync(ANIM_DIR))
 if(!fs.existsSync(ANIM_DIR)) fs.mkdirSync(ANIM_DIR)
 
 const USERS = {}
+const SETTINGS = {
+    SKIP_AUTH:false,
+}
 
 //call nedb.find as a promise
 function pFind(query,options) {
@@ -48,17 +51,14 @@ function pInsert(doc) {
 }
 
 function saveModule(module) {
-    console.log('inside save module',module)
     return Promise.resolve(null).then(() => {
         module.type = 'module'
-        // console.log("publishing the module",module)
+        module.timestamp = Date.now()
         const manifest = module.manifest
         delete module.manifest
         module.animpath = `anim_${Math.random()}_.json`
         const apath = path.join(ANIM_DIR,module.animpath)
         fs.writeFileSync(apath,JSON.stringify(manifest))
-        // console.log("wrote the manifest to the file",apath)
-        // console.log("the final module is", module)
         return pInsert(module)
     })
 }
@@ -75,7 +75,7 @@ function pUpdate(query,doc) {
 function findAllModules() {
     return new Promise((res,rej)=>{
         DB.find({type:'module'})
-            .sort({title:1})
+            .sort({timestamp:-1})
             .projection({javascript:0, json:0, manifest:0})
             .exec((err,docs)=>{
             if(err) return rej(err)
@@ -108,19 +108,19 @@ function getFullModuleById(id) {
 }
 
 function checkAuth(req,res,next) {
+    if(SETTINGS.SKIP_AUTH) return next()
     if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
     const token = req.headers['access-key']
     const user = USERS[token]
-    console.log(token,user)
     if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
     next()
 }
 
 function checkAdminAuth(req,res,next) {
+    if(SETTINGS.SKIP_AUTH) return next()
     if(!req.headers['access-key']) return res.json({success:false,message:'missing access token'})
     const token = req.headers['access-key']
     const user = USERS[token]
-    console.log(token,user)
     if(!user) return res.json({success:false,message:'invalid access token, cannot find user'})
     if(ADMIN_USERS.indexOf(user.username) < 0) {
         return res.json({success:false,message:'this user is not allowed to update the queue'})
@@ -186,13 +186,8 @@ function setupServer() {
     )
 
     app.post('/api/publish/', checkAuth, (req,res)=>{
-        console.log("pubilshign");
         saveModule(req.body)
-            .then(doc=> {
-                console.log("done saving. sending response")
-                console.log("final doc is",doc)
-                res.json({success:true, doc:doc})
-            })
+            .then(doc => res.json({success:true, doc:doc}))
             .catch(e => {
                 console.log("error inside save module",e)
                 res.json({success:false, error:e})
@@ -229,7 +224,6 @@ function setupServer() {
 
 
     app.get('/api/userinfo', (req,res) => {
-        console.log("user info request", req.query)
         const user = USERS[req.query.accesstoken]
         if(user) {
             user.admin = (ADMIN_USERS.indexOf(user.username) >= 0)
@@ -239,15 +233,12 @@ function setupServer() {
     })
 
     app.post('/api/updatequeue', checkAdminAuth, (req,res) => {
-        console.log("headers",req.headers)
         pFind({type:'queue'})
             .then((queues)=> {
                 const queue = queues[0]
                 queue.modules = req.body
-                pUpdate({type:'queue'},queue).then((queue)=>{
-                    console.log("queue is updated",queue.modules.length)
-                    return res.json({success:true, queue:queue})
-                })
+                pUpdate({type:'queue'},queue)
+                    .then(queue => res.json({success:true, queue:queue}))
             })
     })
 
@@ -257,4 +248,5 @@ function setupServer() {
 }
 
 setupServer()
+module.exports = SETTINGS
 
