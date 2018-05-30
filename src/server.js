@@ -317,17 +317,18 @@ function generateChunk(req,res) {
         const anim = mod.manifest.animation
         const data = anim.data
         console.log('got the first module',data.length)
-        const f1 = data[0]
-        console.log("the first frame is", f1)
-        const frame = decodePNGURL(f1,anim.rows, anim.cols)
-        const chunk = [frame]
+        const chunk = []
+        data.forEach(f1 => {
+            const frame = decodePNGURL(f1,anim.rows, anim.cols)
+            chunk.push(frame)
+        })
         return res.json(chunk)
     })
 }
 
 
 function decodePNGURL(url,rows,cols) {
-    console.log("decoding",url,rows,cols)
+    // console.log("decoding",url,rows,cols)
     const frame = []
     for(let r=0; r<rows; r++) {
         const row = []
