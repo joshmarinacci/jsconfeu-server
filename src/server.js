@@ -165,7 +165,7 @@ function setupServer() {
 
 
     //get full info of a particular module
-    app.post('/api/modules/archive/:id', (req,res)=>{
+    app.post('/api/modules/archive/:id', checkAdminAuth, (req,res)=>{
         pUpdateFields({_id:req.params.id},{archived:true}).then((doc)=>{
             console.log("successfully archived it",doc)
             res.json({success:true, doc:doc})
