@@ -30,7 +30,7 @@ get json that looks like
 based on this structure /frames/N gets a chunk containing frames.
 a chunk can have multiple frames within it. 
 
-impelmentation:
+implementation:
 
 
 create /metadata route which returns the info from the first item

@@ -278,10 +278,73 @@ function setupServer() {
             })
     })
 
+    app.get('/metadata', (req,res) => generateEndpointMetadata(req,res))
+    app.get('/frames/:chunknum', (req,res) => generateChunk(req,res))
+
     app.listen(PORT, () => console.log(`
         modules server http://localhost:${PORT}/ 
         database  ${DB_FILE}`))
 }
+
+function getFirstQueueModule() {
+    return pFind({type:'queue'})
+        .then((queues)=> {
+            const queue = queues[0]
+            console.log("the queue is", queue)
+            const first = queue.modules[0]
+            console.log("hte first is", first)
+            return getFullModuleById(first).then(mod => {
+                return mod
+            })
+        })
+}
+function generateEndpointMetadata(req,res) {
+    return getFirstQueueModule().then(mod => {
+        const anim = mod.manifest.animation
+        res.json({
+            fps: anim.fps,
+            rows: anim.rows,
+            cols: anim.cols,
+            seconds: Math.floor(anim.frameCount / anim.fps),
+            frameCount: anim.frameCount,
+            chunks: 1,
+        })
+    })
+}
+
+function generateChunk(req,res) {
+    return getFirstQueueModule().then(mod => {
+        const anim = mod.manifest.animation
+        const data = anim.data
+        console.log('got the first module',data.length)
+        const f1 = data[0]
+        console.log("the first frame is", f1)
+        const frame = decodePNGURL(f1,anim.rows, anim.cols)
+        const chunk = [frame]
+        return res.json(chunk)
+    })
+}
+
+
+function decodePNGURL(url,rows,cols) {
+    console.log("decoding",url,rows,cols)
+    const frame = []
+    for(let r=0; r<rows; r++) {
+        const row = []
+        for(let c=0; c<cols; c++) {
+            if(c%2 ===0) {
+                row[c] = [0, 0, 0]
+            } else {
+                row[c] = [255,0,0]
+            }
+        }
+        frame[r] = row
+    }
+    return frame
+}
+
+
+
 
 setupServer()
 module.exports = SETTINGS
