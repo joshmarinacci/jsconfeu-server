@@ -278,8 +278,8 @@ function setupServer() {
             })
     })
 
-    app.get('/metadata', (req,res) => generateEndpointMetadata(req,res))
-    app.get('/frames/:chunknum', (req,res) => generateChunk(req,res))
+    app.get('/api/metadata', (req,res) => generateEndpointMetadata(req,res))
+    app.get('/api/frames/:chunknum', (req,res) => generateChunk(req,res))
 
     app.listen(PORT, () => console.log(`
         modules server http://localhost:${PORT}/ 
