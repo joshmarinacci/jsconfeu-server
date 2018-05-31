@@ -15,6 +15,7 @@ const SECRETS = {
     GITHUB_CLIENT_SECRET:process.env.GITHUB_CLIENT_SECRET,
     GITHUB_CALLBACK_URL:process.env.GITHUB_CALLBACK_URL
 }
+console.log("using the secrets",SECRETS)
 
 const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat','sandrapersing','linclark','tschneidereit']
 
