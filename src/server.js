@@ -11,9 +11,9 @@ const passport = require('passport')
 const GithubStrategy = require('passport-github')
 
 const SECRETS = {
-    GITHUB_CLIENT_ID:'f85c3170e290cad01938',
-    GITHUB_CLIENT_SECRET:'b08c48e264f24ef13ce369936365b1829598390c',
-    GITHUB_CALLBACK_URL:'https://vr.josh.earth/jsconfeu-builder/api/github/callback'
+    GITHUB_CLIENT_ID:process.env.GITHUB_CALLBACK_URL,
+    GITHUB_CLIENT_SECRET:process.env.GITHUB_CLIENT_SECRET,
+    GITHUB_CALLBACK_URL:process.env.GITHUB_CALLBACK_URL
 }
 
 const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat','sandrapersing','linclark','tschneidereit']
