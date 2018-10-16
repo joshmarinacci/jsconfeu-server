@@ -17,7 +17,8 @@ const SECRETS = {
 }
 console.log("using the secrets",SECRETS)
 
-const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat','sandrapersing','linclark','tschneidereit','potch']
+const ADMIN_USERS = ['joshmarinacci','slightlyoffbeat','sandrapersing','linclark','tschneidereit'
+    ,'potch','SteveKlabnik','Ashleygwilliams','Mykmelez']
 
 
 const DB_FILE = path.join(process.cwd(),'modules.db')
